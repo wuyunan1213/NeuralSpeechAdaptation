@@ -13,7 +13,7 @@ import pickle as pkl
 import matplotlib.pyplot as plt
 
 import config
-fig_dir = config.fig_dir
+train_fig_dir = config.train_fig_dir
 ######################################################################################
 ###################################### Pre-training ##################################
 ######################################################################################
@@ -115,7 +115,7 @@ def test_d2_reliance(old_model, train_list, test_l, test_h, figType, batch_size 
     plt.ylabel('Accuracy')
     plt.xlabel('Batch')
     plt.legend(['Accuracy', 'Loss'], loc = 'upper left')
-    figname = fig_dir + '%s.png'%(figType)
+    figname = train_fig_dir + '%s.png'%(figType)
     plt.savefig(figname)
     plt.close()
     test_l_pred = model.predict(test_l)

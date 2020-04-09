@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import config
-fig_dir = config.fig_dir
+data_fig_dir = config.data_fig_dir
 
 ######################################################################################
 ##################################### Data_generation ################################
@@ -63,7 +63,7 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
     #plt.title()
     if type(file) == str:
         splfile = file.split('/')[-1]
-        figname = fig_dir + splfile.split('.')[0] + '.png'
+        figname = data_fig_dir + splfile.split('.')[0] + '.png'
         print(figname)
         plt.savefig(figname)
         plt.close()
@@ -91,7 +91,7 @@ def simTestData(n_sub, sigma_sub, file = None):
     #plt.title()
     if type(file) == str:
         splfile = file.split('/')[-1]
-        figname = fig_dir + splfile.split('.')[0] + '.png'
+        figname = data_fig_dir + splfile.split('.')[0] + '.png'
         print(figname)
         plt.savefig(figname)
         plt.close()

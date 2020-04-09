@@ -5,11 +5,14 @@ import numpy as np
 
 root_dir = '/Users/charleswu/Google Drive/HoltLab/CueWeighting/Modeling/Network/NeuralSpeechAdaptation/'
 data_dir = root_dir + 'Data/'
-fig_dir = root_dir + 'Figure/'
+
 pre_file = data_dir + 'pretrain.pkl'
 can_file = data_dir + 'canonical.pkl'
 rev_file = data_dir + 'rev.pkl'
 test_file = data_dir + 'test.pkl'
+
+train_fig_dir = root_dir + 'Figure_training/'
+data_fig_dir = root_dir + 'Figure_data/'
 
 ######################################################################################
 ################################### Data generation ##################################
@@ -20,19 +23,19 @@ test_file = data_dir + 'test.pkl'
 n_sub = 15 ### number of inputs units in each bank of input
 n_samples = 10000 ### number of samples sampled from each distribution for pretraining
 #n_acc_samples = 250 ###
-n_exposure = 100
+n_exposure = 50
 
 ###Pre-training and canonical
-mu_b = np.array([0.25, 0.2])
-mu_p = np.array([0.75, 0.8])
+mu_b = np.array([0.2, 0.2])
+mu_p = np.array([0.8, 0.8])
 
 sigma_b = np.array([[0.006, 0], [0, 0.016]])
 sigma_p = np.array([[0.006, 0], [0, 0.016]])
 sigma_sub = np.array([[0.00001, 0], [0, 0.00001]])
 
 ###Reverse
-mu_rev_b = np.array([0.2, 0.75])
-mu_rev_p = np.array([0.8, 0.25])
+mu_rev_b = np.array([0.2, 0.8])
+mu_rev_p = np.array([0.8, 0.2])
 
 ###Test 
 mu_low = np.array([0.5, 0.2])

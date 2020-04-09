@@ -24,7 +24,8 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 ###import paths and parameters
 root_dir = config.root_dir
 data_dir = config.data_dir
-fig_dir = config.fig_dir
+train_fig_dir = config.train_fig_dir
+data_fig_dir = config.data_fig_dir
 
 pre_file = config.pre_file
 can_file = config.can_file
