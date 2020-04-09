@@ -39,7 +39,7 @@ def samples_2_data(ldf, lbls, ratio):
     X_test, y_test = shuffle(X_test, y_test)
     return X_train, y_train, X_test, y_test
 
-def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_ratio = 0.75, file = None):
+def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_ratio = 0.4, file = None):
     ### Distribution Samples
     b_centers = np.random.multivariate_normal(mu_b, sigma_b, size=[n_samples,])
     p_centers = np.random.multivariate_normal(mu_p, sigma_p, size=[n_samples,])
@@ -71,7 +71,7 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
         plt.show()
         plt.close()
     ### Convert Samples to Dataframes
-    X_tr, y_tr, X_te, y_te = samples_2_data([b_data, p_data], [1, 0], train_ratio)
+    X_tr, y_tr, X_te, y_te = samples_2_data([b_data, p_data], [0, 1], train_ratio)
     return X_tr, y_tr, X_te,y_te
 
 def simTestData(n_sub, sigma_sub, file = None):
@@ -100,7 +100,7 @@ def simTestData(n_sub, sigma_sub, file = None):
         plt.close()
     ### Convert Samples to Dataframes
 
-    return [b_data], 1, [p_data], 0
+    return [b_data], 0, [p_data], 1
 
 ######################################################################################
 ################################## Exposure learning #################################

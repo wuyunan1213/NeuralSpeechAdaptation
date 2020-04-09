@@ -37,18 +37,18 @@ def loadOfInt(names, folder):
         all_dfs.append(df)
     return all_dfs
 
-def ff_nn(n_slow=30):
+def ff_nn(n_slow=30, activation = 'linear'):
     model = Sequential()
-    model.add(Dense(n_slow, activation="tanh", use_bias=True, name="slow"))
+    model.add(Dense(n_slow, activation=activation, use_bias=True, name="slow"))
     model.add(Dense(1, activation='sigmoid', use_bias=True, name="slow_out"))
     opt = tf.keras.optimizers.Adam(lr = 0.002)#, decay = 1e-6)
     model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
     return model
 
-def slow_fast_nn(lr_s = 0.005, lr_f=0.05, n_inp = 30, n_slow=30, n_fast=30, train_slow = False):
+def slow_fast_nn(lr_s = 0.005, lr_f=0.05, n_inp = 30, n_slow=30, n_fast=30, activation = 'linear', train_slow = False):
     inp = Input(shape = (n_inp,), name = 'input')
-    slow = Dense(n_slow, activation="tanh", name = 'slow')(inp)
-    fast = Dense(n_fast, activation="tanh", name = 'fast')(inp)
+    slow = Dense(n_slow, activation=activation, name = 'slow')(inp)
+    fast = Dense(n_fast, activation=activation, name = 'fast')(inp)
     #To be able to assign a different learning rate to the entire path in fast or slow
     s2 = Dense(1, activation="linear", name = 'slow_2')(slow)
     f2 = Dense(1, activation="linear", name = 'fast_2')(fast)
@@ -56,19 +56,20 @@ def slow_fast_nn(lr_s = 0.005, lr_f=0.05, n_inp = 30, n_slow=30, n_fast=30, trai
     out = Dense(1, activation="sigmoid", name="output")(added)
     model = Model(inputs = inp, outputs = out)
     if(train_slow):
+        ###haven't been able to use the LRMultiplier function yet
         model.compile(optimizer = LRMultiplier('adam', {'slow':lr_s, 'fast':lr_f, 'slow_2':lr_s, 'fast_2':lr_f}),
                     loss='binary_crossentropy',
                     metrics=['accuracy'])        
     else:
-        slow.trainable = False
+        slow.trainable = False ##silence these to unfreeze the slow pathway 
         s2.trainable = False
-        model.compile(optimizer = tf.keras.optimizers.SGD(lr=0.05,),
+        model.compile(optimizer = tf.keras.optimizers.SGD(lr=0.05),
                       loss='binary_crossentropy',
                       metrics=['accuracy'])
     return model
 
-def set_fs_weights(slow_model):
-    fs_model = slow_fast_nn()
+def set_fs_weights(slow_model, activation = 'linear', train_slow = True):
+    fs_model = slow_fast_nn(activation = activation, train_slow = train_slow)
     sm_weights = slow_model.get_weights()
     fs_model.get_layer('slow').set_weights(sm_weights[:2])
     fs_model.get_layer('slow_2').set_weights(sm_weights[2:])
@@ -76,7 +77,7 @@ def set_fs_weights(slow_model):
 
 class NBatchLogger(Callback):
     """
-    A Logger that log average performance per `display` steps.
+    A Logger that log average performance per batch.
     """
     def on_train_begin(self, logs = {}):
         self.losses = []
@@ -88,20 +89,31 @@ class NBatchLogger(Callback):
 
 class Test_NBatchLogger(Callback):
     """
-    A Logger that log average performance per `display` steps.
+    A Logger that log average performance per batch.
     """
+    def __init__(self, test_l, test_h):
+        self.test_l = test_l
+        self.test_h = test_h
+
     def on_train_begin(self, logs = {}):
-        self.val = []
+        self.losses = []
+        self.acc = []
+        self.pred_l = []
+        self.pred_h = []
 
     def on_batch_end(self, batch, logs={}):
-        self.val.append(logs.get('val_loss'))
+        self.losses.append(logs.get('loss'))
+        self.acc.append(logs.get('acc'))
+        self.pred_l.extend(self.model.predict(self.test_l))
+        self.pred_h.extend(self.model.predict(self.test_h))
+
 
 def test_d2_reliance(old_model, train_list, test_l, test_h, figType, batch_size = 1500, epoch = 1):
     model = tf.keras.models.clone_model(old_model)
     model.compile(optimizer = tf.keras.optimizers.SGD(lr=0.05,),
                       loss='binary_crossentropy',
                       metrics=['accuracy'])
-    history = NBatchLogger()
+    history = Test_NBatchLogger(test_l = test_l, test_h = test_h)
     fs_hist = model.fit(
         train_list[0], train_list[1],
         batch_size = batch_size,
@@ -109,12 +121,15 @@ def test_d2_reliance(old_model, train_list, test_l, test_h, figType, batch_size 
         validation_data=(train_list[2], train_list[3]),
         callbacks = [history]
     )
-    plt.plot(history.acc)
-    plt.plot(history.losses)
-    plt.title('%s_Exposure accuracy'%(figType))
-    plt.ylabel('Accuracy')
+    # plt.plot(history.acc)
+    # plt.plot(history.losses)
+    plt.plot(history.pred_l)
+    plt.plot(history.pred_h)
+    plt.title('%s_Test probabilities'%(figType))
+    plt.ylabel('Prob')
     plt.xlabel('Batch')
-    plt.legend(['Accuracy', 'Loss'], loc = 'upper left')
+    plt.ylim((0, 1))
+    plt.legend(['Low_F0', 'High_F0'], loc = 'upper left')
     figname = train_fig_dir + '%s.png'%(figType)
     plt.savefig(figname)
     plt.close()

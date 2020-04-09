@@ -50,7 +50,7 @@ high_d2_test = np.array(train.loadOfInt('test.pkl', data_dir)[2])
 
 
 ###pre-training the model
-slow_model = train.ff_nn()
+slow_model = train.ff_nn(activation = 'linear')
 history = train.NBatchLogger()
 slow_hist = slow_model.fit(
     pretrain_data[0], pretrain_data[1],
@@ -62,11 +62,11 @@ slow_hist = slow_model.fit(
 )
 # plt.plot(history.acc)
 # plt.plot(history.losses)
-# plt.title('Training accuracy')
+# plt.title('Pre_Training accuracy')
 # plt.ylabel('Accuracy')
 # plt.xlabel('Batch')
 # plt.legend(['Accuracy', 'Loss'], loc = 'upper left')
-# figname = fig_dir + 'Training_Accuracy.png'
+# figname = train_fig_dir + 'Training_Accuracy.png'
 # plt.savefig(figname)
 # plt.close()
 
@@ -74,7 +74,7 @@ EXPOSURE_BATCH_SIZE = 1
 EXPOSURE_EPOCHS = 1
 
 # ### Three different fs_nn with similar initializations
-fs = train.set_fs_weights(slow_model)
+fs = train.set_fs_weights(slow_model, activation = 'linear', train_slow = False)
 # fs_r2 = set_fs_weights(slow_model)
 
 # ### Exposure phase training with canonical and reverse data
@@ -82,6 +82,10 @@ c_l, c_h = train.test_d2_reliance(fs, canonical, low_d2_test, high_d2_test, 'CAN
 print('CANONICAL = ', c_l, c_h)
 r_l, r_h = train.test_d2_reliance(fs, rev, low_d2_test, high_d2_test, 'REVERSE', batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
 print('REVERSE = ', r_l, r_h)
+
+# f = open('.txt', 'wb'):
+# 	f.save(c_l, c_h,)
+
 # r2_l, r2_h = test_d2_reliance(fs_r2, rev2, low_d2_test, high_d2_test, batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
 # print(r1_l, r1_h)
 # print(c_l, c_h)
