@@ -39,7 +39,7 @@ def samples_2_data(ldf, lbls, ratio):
     X_test, y_test = shuffle(X_test, y_test)
     return X_train, y_train, X_test, y_test
 
-def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_ratio = 0.4, file = None):
+def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_ratio = 0.8, file = None):
     ### Distribution Samples
     b_centers = np.random.multivariate_normal(mu_b, sigma_b, size=[n_samples,])
     p_centers = np.random.multivariate_normal(mu_p, sigma_p, size=[n_samples,])
@@ -76,7 +76,7 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
 
 def simTestData(n_sub, sigma_sub, file = None):
     b = np.array([0.5, 0.2])
-    p = np.array([0.5, 0.8])
+    p = np.array([0.5, 1])
 
     b_samples = np.random.multivariate_normal(b, sigma_sub, size=[n_sub, ])
     p_samples = np.random.multivariate_normal(p, sigma_sub, size=[n_sub, ])

@@ -47,8 +47,12 @@ pr_data = generate.simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma
 pkl.dump(pr_data, open(pre_file, "wb"))
 
 #canonical
-np.random.seed(10000000)
+np.random.seed(500)
 can_data = generate.simData(n_sub, n_exposure, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, file = can_file)
+# can_data = []
+# idx = np.random.choice([i for i in range(n_samples)])
+# for i in range(len(pr_data)):
+# 	can_data.append(pr_data[i][idx, :])
 pkl.dump(can_data, open(can_file, "wb"))
 
 #reverse
