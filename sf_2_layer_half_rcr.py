@@ -43,8 +43,8 @@ rev_file = config.rev_file
 test_file = config.test_file
 
 ###Training parameters
-PRETRAIN_BATCH_SIZE = 8
-PRETRAIN_EPOCHs = 10
+PRETRAIN_BATCH_SIZE = 100
+PRETRAIN_EPOCHs = 5
 EXPOSURE_BATCH_SIZE = 1
 EXPOSURE_EPOCHS = 1
 
@@ -65,7 +65,7 @@ high_d2_test = np.array(train_one.loadOfInt('test.pkl', data_dir)[2])
 ### In this version, I changed the activation to linear units, which is set as default in my implementation
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
 lr_slow = 1
-lr_fast = 200
+lr_fast = 2
 
 slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = 1)
 

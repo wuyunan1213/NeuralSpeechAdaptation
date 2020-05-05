@@ -86,7 +86,7 @@ def ff_nn_one(n_slow=40, n_fast = 10, n_inp = 30, lr_s = 1, lr_f = 10, activatio
 
     ####for now we will just have one fixed learning rate for the slow-fast pretraining, which
     #### is essentially a slow-slow model 
-    model.compile(optimizer = LRMultiplier('adam', {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
+    model.compile(optimizer = LRMultiplier(Adam(lr=1e-3), {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
                 #SGD(lr=0.05),
                 loss='binary_crossentropy',
                 metrics=['accuracy'])    
@@ -105,7 +105,7 @@ def slow_fast_nn_one(lr_s = 1, lr_f = 10, n_inp = 30, n_slow=40, n_fast=10, acti
     model = Model(inputs = inp, outputs = out)
     if(train_slow):
         ###haven't been able to use the LRMultiplier function yet
-        model.compile(optimizer = LRMultiplier('adam', {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
+        model.compile(optimizer = LRMultiplier(Adam(lr=1e-3), {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
                     loss='binary_crossentropy',
                     metrics=['accuracy'])        
     else:
