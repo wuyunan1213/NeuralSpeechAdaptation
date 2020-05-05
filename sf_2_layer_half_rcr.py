@@ -43,10 +43,10 @@ rev_file = config.rev_file
 test_file = config.test_file
 
 ###Training parameters
-PRETRAIN_BATCH_SIZE = 100
+PRETRAIN_BATCH_SIZE = 10
 PRETRAIN_EPOCHs = 5
-EXPOSURE_BATCH_SIZE = 1
-EXPOSURE_EPOCHS = 1
+EXPOSURE_BATCH_SIZE = 5
+EXPOSURE_EPOCHS = 10
 
 ### Load all Data
 # Labels are 1 = "b" and 0 = "p"
@@ -65,7 +65,7 @@ high_d2_test = np.array(train_one.loadOfInt('test.pkl', data_dir)[2])
 ### In this version, I changed the activation to linear units, which is set as default in my implementation
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
 lr_slow = 1
-lr_fast = 2
+lr_fast = 20
 
 slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = 1)
 
@@ -102,7 +102,7 @@ plt.close()
 
 # fs_r2 = set_fs_weights(slow_model)
 
-n_exp = 1
+n_exp = 25
 for i in range(n_exp):
     # ### Exposure phase training with canonical and reverse data
     fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, train_slow = True)
