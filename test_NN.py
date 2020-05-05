@@ -30,8 +30,8 @@ def get_NN(batch_size = 1, n_input = 30, n_slow = 30, n_fast = 30, n_output = 1)
     layers[1]['batch_size'] = batch_size
 
     layers[2]['type'] = 'IP'
-    layers[2]['n_slow'] = n_slow
-	layers[2]['n_fast'] = n_fast
+    layers[2]['Snum'] = n_slow
+	layers[2]['Fnum'] = n_fast
 
 	layers[3]['type'] = 'LOSS'
 	layers[3]['num'] = n_output

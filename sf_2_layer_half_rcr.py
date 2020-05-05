@@ -102,7 +102,7 @@ plt.close()
 
 # fs_r2 = set_fs_weights(slow_model)
 
-n_exp = 25
+n_exp = 1
 for i in range(n_exp):
     # ### Exposure phase training with canonical and reverse data
     fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, train_slow = True)

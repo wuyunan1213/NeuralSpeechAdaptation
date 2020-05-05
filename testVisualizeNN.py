@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from numpy.random import random_sample
 
-network_structure = [3,4,1]
+network_structure = [3,5,5,1]
 # Draw the Neural Network without weights
 
 # Draw the Neural Network with weights
