@@ -76,7 +76,7 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
 
 def simTestData(n_sub, sigma_sub, file = None):
     b = np.array([0.5, 0.2])
-    p = np.array([0.5, 1])
+    p = np.array([0.5, 0.8])
 
     b_samples = np.random.multivariate_normal(b, sigma_sub, size=[n_sub, ])
     p_samples = np.random.multivariate_normal(p, sigma_sub, size=[n_sub, ])

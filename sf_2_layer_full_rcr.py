@@ -25,7 +25,7 @@ from keras.callbacks import LambdaCallback, ModelCheckpoint
 ###import config and helper functions
 import config
 import generate
-import train_2_half_rcr as train_one
+import train_2_full_rcr as train_one
 
 
 ###suppresses the runtime error. Not sure what happened but this works
@@ -46,7 +46,7 @@ test_file = config.test_file
 PRETRAIN_BATCH_SIZE = 10
 PRETRAIN_EPOCHs = 5
 EXPOSURE_BATCH_SIZE = 5
-EXPOSURE_EPOCHS = 3
+EXPOSURE_EPOCHS = 10
 
 ### Load all Data
 # Labels are 1 = "b" and 0 = "p"
@@ -65,7 +65,7 @@ high_d2_test = np.array(train_one.loadOfInt('test.pkl', data_dir)[2])
 ### In this version, I changed the activation to linear units, which is set as default in my implementation
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
 lr_slow = 1
-lr_fast = 20
+lr_fast = 10
 
 slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = 1)
 

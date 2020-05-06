@@ -39,7 +39,7 @@ mu_rev_p = np.array([0.8, 0.2])
 
 ###Test 
 mu_low = np.array([0.5, 0.2])
-mu_high = np.array([0.5, 1])
+mu_high = np.array([0.5, 0.8])
 
 sigma_low = np.array([[0, 0], [0, 0]])
 sigma_high = np.array([[0, 0], [0, 0]])
