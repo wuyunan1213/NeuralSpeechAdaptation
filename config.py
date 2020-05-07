@@ -10,6 +10,7 @@ pre_file = data_dir + 'pretrain.pkl'
 can_file = data_dir + 'canonical.pkl'
 rev_file = data_dir + 'rev.pkl'
 test_file = data_dir + 'test.pkl'
+test_file_hor = data_dir + 'test_hor.pkl'
 
 train_fig_dir = root_dir + 'Figure_training/'
 data_fig_dir = root_dir + 'Figure_data/'
@@ -29,8 +30,15 @@ n_exposure = 50
 mu_b = np.array([0.2, 0.2])
 mu_p = np.array([0.8, 0.8])
 
-sigma_b = np.array([[0.006, 0], [0, 0.016]])
-sigma_p = np.array([[0.006, 0], [0, 0.016]])
+# sigma_b = np.array([[0.006, 0], [0, 0.016]])
+# sigma_p = np.array([[0.006, 0], [0, 0.016]])
+
+sigma_b = np.array([[0.02, 0], [0, 0.08]])
+sigma_p = np.array([[0.02, 0], [0, 0.08]])
+
+sigma_b_exposure = np.array([[0.006, 0], [0, 0.016]])
+sigma_p_exposure = np.array([[0.006, 0], [0, 0.016]])
+
 sigma_sub = np.array([[0.00001, 0], [0, 0.00001]])
 
 ###Reverse

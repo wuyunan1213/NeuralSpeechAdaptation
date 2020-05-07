@@ -10,12 +10,21 @@ from keras.layers import Input, Dense, Add, Concatenate
 from keras_lr_multiplier import LRMultiplier
 from keras.callbacks import Callback
 from keras.optimizers import SGD, Adam
+
+
+import datetime
+import random
+from math import ceil
 # from tensorflow.keras.models import Sequential, Model
 # from tensorflow.keras.layers import Input, Dense, Dropout, LSTM, BatchNormalization
 # from tensorflow.keras.callbacks import Callback
 from keras.callbacks import LambdaCallback, ModelCheckpoint
 import pickle as pkl
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+#from LR_SGD import LR_SGD
 
 import scipy, time
 import scipy.io
@@ -50,21 +59,27 @@ class Test_NBatchLogger(Callback):
     """
     A Logger that log  performance per batch.
     """
-    def __init__(self, test_l, test_h):
+    def __init__(self, test_l, test_h, test_b, test_p):
         self.test_l = test_l
         self.test_h = test_h
+        self.test_b = test_b
+        self.test_p = test_p
 
     def on_train_begin(self, logs = {}):
         self.losses = []
         self.acc = []
         self.pred_l = []
         self.pred_h = []
+        self.pred_b = []
+        self.pred_p = []
 
     def on_batch_end(self, batch, logs={}):
         self.losses.append(logs.get('loss'))
         self.acc.append(logs.get('acc'))
         self.pred_l.extend(self.model.predict(self.test_l)[0])
         self.pred_h.extend(self.model.predict(self.test_h)[0])
+        self.pred_b.extend(self.model.predict(self.test_b)[0])
+        self.pred_p.extend(self.model.predict(self.test_p)[0])
 
 def ff_nn_one(n_slow=40, n_fast = 40, n_inp = 30, lr_s = 1, lr_f = 10, activation = 'linear'):
     model = Sequential()
@@ -86,7 +101,7 @@ def ff_nn_one(n_slow=40, n_fast = 40, n_inp = 30, lr_s = 1, lr_f = 10, activatio
 
     ####for now we will just have one fixed learning rate for the slow-fast pretraining, which
     #### is essentially a slow-slow model 
-    model.compile(optimizer = LRMultiplier(Adam(lr=1e-4), {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
+    model.compile(optimizer = LRMultiplier(Adam(lr=5e-5), {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
                 #SGD(lr=0.05),
                 loss='binary_crossentropy',
                 metrics=['accuracy'])    
@@ -105,7 +120,7 @@ def slow_fast_nn_one(lr_s = 1, lr_f = 10, n_inp = 30, n_slow=40, n_fast=40, acti
     model = Model(inputs = inp, outputs = out)
     if(train_slow):
         ###haven't been able to use the LRMultiplier function yet
-        model.compile(optimizer = LRMultiplier(Adam(lr=1e-4), {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
+        model.compile(optimizer = LRMultiplier(Adam(lr=5e-5), {'slow':lr_s, 'fast':lr_f, 's2': lr_s, 'f2': lr_f}),
                     loss='binary_crossentropy',
                     metrics=['accuracy'])        
     else:
@@ -133,7 +148,7 @@ def set_fs_weights_one(slow_model, lr_s = 1, lr_f = 10, activation = 'linear', t
     # sm_weights = [6,] with (30,30)(30,0) (slow weights, bias), (30,30)(30,0)(fast weights, bias), (30,1)(1,)
     return fs_model
 
-def test_d2_reliance(model, train_list, test_l, test_h, figType, lr_s = 1, lr_f = 10, batch_size = 40, epoch = 1):
+def test_d2_reliance(model, train_list, test_l, test_h, test_b, test_p, figType, lr_s = 1, lr_f = 10, batch_size = 40, epoch = 1):
     # model = clone_model(old_model)
     # ### SAVE WEIGHTS
     # model.compile(optimizer = LRMultiplier('adam', {'slow':lr_s, 'fast':lr_f}),
@@ -141,7 +156,7 @@ def test_d2_reliance(model, train_list, test_l, test_h, figType, lr_s = 1, lr_f 
     #               loss='binary_crossentropy',
     #               metrics=['accuracy'])
 
-    history = Test_NBatchLogger(test_l = test_l, test_h = test_h)
+    history = Test_NBatchLogger(test_l = test_l, test_h = test_h, test_b = test_b, test_p = test_p)
     fs_hist = model.fit(
         train_list[0], train_list[1],
         batch_size = batch_size,
@@ -172,8 +187,11 @@ def test_d2_reliance(model, train_list, test_l, test_h, figType, lr_s = 1, lr_f 
     # plt.close()
     test_l_pred = model.predict(test_l)
     test_h_pred = model.predict(test_h)
+    test_b_pred = model.predict(test_b)
+    test_p_pred = model.predict(test_p)
 
-    return test_l_pred, test_h_pred, history.pred_l, history.pred_h
+
+    return test_l_pred, test_h_pred, history.pred_l, history.pred_h, test_b_pred, test_p_pred, history.pred_b, history.pred_p,
 
 
 def mean_confidence_interval(data, confidence=0.95):
@@ -206,9 +224,26 @@ def plot_mean_and_CI(mean, se, mean2 = None, se2 = None, color_shading=None,
     
     return fig
 
+# def plot_exp_results(fname, lrr = 12, c1 = 'blue', c2 = 'orange'):
+#     r = []
+#     with open(fname, 'rb') as f:
+#         try:
+#             while True:
+#                 r.append(pkl.load(f))
+#         except EOFError:
+#             pass
+#     r = np.array(r)
+#     rev_l_m, rev_l_se, rev_h_m, rev_h_se = mean_confidence_interval(r)
+#     f2 = plot_mean_and_CI(rev_l_m, rev_l_se, mean2 = rev_h_m, se2 = rev_h_se, color_shading = c1,
+#                                     color_shading2=c2)
+#     f2name = train_fig_dir+'%s_2_f_prob_%s_newdata.png'%(fname, lrr)
+#     f2.savefig(f2name)
+
+
 def plot_exp_results(fname, lrr = 12, c1 = 'blue', c2 = 'orange'):
     r = []
-    with open(fname, 'rb') as f:
+    filename = fname + '.pkl'
+    with open(filename, 'rb') as f:
         try:
             while True:
                 r.append(pkl.load(f))
@@ -218,5 +253,96 @@ def plot_exp_results(fname, lrr = 12, c1 = 'blue', c2 = 'orange'):
     rev_l_m, rev_l_se, rev_h_m, rev_h_se = mean_confidence_interval(r)
     f2 = plot_mean_and_CI(rev_l_m, rev_l_se, mean2 = rev_h_m, se2 = rev_h_se, color_shading = c1,
                                     color_shading2=c2)
-    f2name = train_fig_dir+'%s_2_half_prob_%s.png'%(fname, lrr)
+    f2name = train_fig_dir+'%s_2_f_prob_%s_newdata.png'%(fname, lrr)
     f2.savefig(f2name)
+
+
+def compare_weights_2(model, train, batch_size, epoch_size, pred_l, pred_h, id, xlab, ylab):
+    
+    # get all weights before exposing
+    before_weight_dict = {}
+    for layer in model.layers:
+        name = layer.get_config()['name']
+        if layer.get_weights() != []:
+            weights = layer.get_weights()[0]
+            before_weight_dict[name] = weights
+    
+    result = {}
+    result["slow"] = []
+    result["s2"] = []
+    result["fast"] = []
+    result["f2"] = []
+    result["output"] = []
+    
+    # almost no weight changes after 30th batch
+    for i in range(0, np.shape(train[0])[0]):
+        # expose model 1 batch
+        model.fit(np.array([train[0][i]]), np.array([train[1][i]]),batch_size = 1, 
+                  epochs = 1, verbose = 0)
+    
+        # get weights after exposing
+        after_weight_dict = {}
+        for layer in model.layers:
+            name = layer.get_config()['name']
+            if layer.get_weights() != []:
+                weights = layer.get_weights()[0]
+                after_weight_dict[name] = weights
+    
+        # add weights to result dictionary
+        if (i % 1 == 0):
+            for key in after_weight_dict:
+                if key in result:
+                    # trim weight array by "by" (we cant plot all 900 weights)
+                    if ((key == "slow") or (key == "fast")):
+                        by = 50
+                    else: by = 1
+                    result[key] = np.append(result[key], (after_weight_dict[key]).flatten()[::by])
+                    
+                #after = (after_weight_dict[key]).flatten()
+                #before = (before_weight_dict[key]).flatten()
+                #result[key] = result[key] + [np.sum(np.absolute(np.subtract(after,before)))]
+    
+    print("Exposure phase done")
+    print("Start plot")
+    print('%s TEST PROBABILITIES = '%(id), model.predict(pred_l)[0], model.predict(pred_h)[0])
+    # plot 3d weight change plot
+    # x = batch
+    # y = weight index
+    # z = weight value
+    
+    # slow_1
+    
+    # batchLen = len(train[0])//10
+    # weightLen = int(len(result["slow"])/batchLen)
+
+    batchLen = np.shape(train[0])[0]
+    weightLen = int(len(result["slow"])/batchLen)
+    
+# scatter 3d plot
+   
+    fig = plt.figure(figsize=plt.figaspect(0.5))
+    
+    x = np.repeat(np.arange(1,batchLen+1),weightLen)
+    y = np.tile(np.arange(1, weightLen+1), batchLen)*50
+    z_slow = result["slow"]
+    z_fast = result["fast"]
+   
+    print (len(x), len(y), len(z_slow))
+    ax = fig.add_subplot(1,2,1,projection = '3d')
+    ax.scatter3D(x,y,z_slow,c=z_slow,cmap='Blues')
+    ax.set_title(id+" exposure : Slow layer weights")
+    ax.set_xlabel("Batch")
+    ax.set_ylabel("Weight index")
+    ax.set_zlabel("Weight value")
+    
+    ax = fig.add_subplot(1,2,2,projection = '3d')
+    ax.scatter3D(x,y,z_fast,c=z_fast,cmap='Blues')
+    ax.set_title(id+" exposure : Fast layer weights")
+    ax.set_xlabel("Batch")
+    ax.set_ylabel("Weight index")
+    ax.set_zlabel("Weight value")
+    plt.show()
+    
+    return
+
+

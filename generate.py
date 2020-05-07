@@ -43,9 +43,9 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
     ### Distribution Samples
     b_centers = np.random.multivariate_normal(mu_b, sigma_b, size=[n_samples,])
     p_centers = np.random.multivariate_normal(mu_p, sigma_p, size=[n_samples,])
-    ### Quick'n'Dirty way of getting rid of negatives
-    b_centers = np.asarray(list(map(no_neg, b_centers)))
-    p_centers = np.asarray(list(map(no_neg, p_centers)))
+    ### Do not get rid of the negatives in the new version
+    b_centers = np.asarray(list(b_centers))
+    p_centers = np.asarray(list(p_centers))
     ### Getting Samples
     b_samples = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), b_centers)
     p_samples = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), p_centers)
@@ -59,7 +59,8 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
     # plt.scatter(p_data[:, 0:15], p_data[:, 15:30])
     plt.scatter(b_centers[:, 0], b_centers[:, 1])
     plt.scatter(p_centers[:, 0], p_centers[:, 1])
-    plt.xlim((0,1))
+    plt.xlim((-1,2))
+    plt.ylim((-1,2))
     #plt.title()
     if type(file) == str:
         splfile = file.split('/')[-1]
@@ -87,7 +88,37 @@ def simTestData(n_sub, sigma_sub, file = None):
 
     plt.scatter(b_data[0:15], b_data[15:30])
     plt.scatter(p_data[0:15], p_data[15:30])
-    plt.xlim((0,1))
+    plt.xlim((-1,2))
+    plt.ylim((-1,2))
+    #plt.title()
+    if type(file) == str:
+        splfile = file.split('/')[-1]
+        figname = data_fig_dir + splfile.split('.')[0] + '.png'
+        print(figname)
+        plt.savefig(figname)
+        plt.close()
+    else:
+        plt.show()
+        plt.close()
+    ### Convert Samples to Dataframes
+
+    return [b_data], 0, [p_data], 1
+
+def simTestData_hor(n_sub, sigma_sub, file = None):
+    b = np.array([0.2, 0.5])
+    p = np.array([0.8, 0.5])
+
+    b_samples = np.random.multivariate_normal(b, sigma_sub, size=[n_sub, ])
+    p_samples = np.random.multivariate_normal(p, sigma_sub, size=[n_sub, ])
+
+    b_data = b_samples.flatten(order = 'F')
+    p_data = p_samples.flatten(order = 'F')
+
+
+    plt.scatter(b_data[0:15], b_data[15:30])
+    plt.scatter(p_data[0:15], p_data[15:30])
+    plt.xlim((-1,2))
+    plt.ylim((-1,2))
     #plt.title()
     if type(file) == str:
         splfile = file.split('/')[-1]

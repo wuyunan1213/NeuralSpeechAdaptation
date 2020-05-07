@@ -16,6 +16,7 @@ pre_file = config.pre_file
 can_file = config.can_file
 rev_file = config.rev_file
 test_file = config.test_file
+test_file_hor = config.test_file_hor
 
 n_sub = config.n_sub
 n_samples = config.n_samples
@@ -27,6 +28,9 @@ mu_p = config.mu_p
 
 sigma_b = config.sigma_b
 sigma_p = config.sigma_p
+sigma_b_exposure = config.sigma_b_exposure
+sigma_p_exposure = config.sigma_p_exposure
+
 sigma_sub = config.sigma_sub
 
 ###Reverse
@@ -48,7 +52,7 @@ pkl.dump(pr_data, open(pre_file, "wb"))
 
 #canonical
 np.random.seed(500)
-can_data = generate.simData(n_sub, n_exposure, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, file = can_file)
+can_data = generate.simData(n_sub, n_exposure, mu_b, mu_p, sigma_b_exposure, sigma_p_exposure, sigma_sub, file = can_file)
 # can_data = []
 # idx = np.random.choice([i for i in range(n_samples)])
 # for i in range(len(pr_data)):
@@ -57,7 +61,7 @@ pkl.dump(can_data, open(can_file, "wb"))
 
 #reverse
 np.random.seed(30000000)
-r_data = generate.simData(n_sub, n_exposure, mu_rev_b, mu_rev_p, sigma_b, sigma_p, sigma_sub, file = rev_file)
+r_data = generate.simData(n_sub, n_exposure, mu_rev_b, mu_rev_p, sigma_b_exposure, sigma_p_exposure, sigma_sub, file = rev_file)
 pkl.dump(r_data, open(rev_file, "wb"))
 
 #test
@@ -65,6 +69,10 @@ np.random.seed(1000)
 test_data = generate.simTestData(n_sub,  sigma_sub, file = test_file)
 pkl.dump(test_data, open(test_file, "wb"))
 
+#test along the primary dimension
+np.random.seed(1000)
+test_data_hor = generate.simTestData_hor(n_sub,  sigma_sub, file = test_file_hor)
+pkl.dump(test_data_hor, open(test_file_hor, "wb"))
 
 
 
