@@ -59,27 +59,21 @@ class Test_NBatchLogger(Callback):
     """
     A Logger that log  performance per batch.
     """
-    def __init__(self, test_l, test_h, test_b, test_p):
+    def __init__(self, test_l, test_h):
         self.test_l = test_l
         self.test_h = test_h
-        self.test_b = test_b
-        self.test_p = test_p
 
     def on_train_begin(self, logs = {}):
         self.losses = []
         self.acc = []
         self.pred_l = []
         self.pred_h = []
-        self.pred_b = []
-        self.pred_p = []
 
     def on_batch_end(self, batch, logs={}):
         self.losses.append(logs.get('loss'))
         self.acc.append(logs.get('acc'))
         self.pred_l.extend(self.model.predict(self.test_l)[0])
         self.pred_h.extend(self.model.predict(self.test_h)[0])
-        self.pred_b.extend(self.model.predict(self.test_b)[0])
-        self.pred_p.extend(self.model.predict(self.test_p)[0])
 
 def ff_nn_one(n_slow=40, n_fast = 40, n_inp = 30, lr_s = 1, lr_f = 10, activation = 'linear'):
     model = Sequential()
@@ -148,7 +142,7 @@ def set_fs_weights_one(slow_model, lr_s = 1, lr_f = 10, activation = 'linear', t
     # sm_weights = [6,] with (30,30)(30,0) (slow weights, bias), (30,30)(30,0)(fast weights, bias), (30,1)(1,)
     return fs_model
 
-def test_d2_reliance(model, train_list, test_l, test_h, test_b, test_p, figType, lr_s = 1, lr_f = 10, batch_size = 40, epoch = 1):
+def test_d2_reliance(model, train_list, test_l, test_h, figType, lr_s = 1, lr_f = 10, batch_size = 40, epoch = 1):
     # model = clone_model(old_model)
     # ### SAVE WEIGHTS
     # model.compile(optimizer = LRMultiplier('adam', {'slow':lr_s, 'fast':lr_f}),
@@ -156,7 +150,7 @@ def test_d2_reliance(model, train_list, test_l, test_h, test_b, test_p, figType,
     #               loss='binary_crossentropy',
     #               metrics=['accuracy'])
 
-    history = Test_NBatchLogger(test_l = test_l, test_h = test_h, test_b = test_b, test_p = test_p)
+    history = Test_NBatchLogger(test_l = test_l, test_h = test_h)
     fs_hist = model.fit(
         train_list[0], train_list[1],
         batch_size = batch_size,
@@ -187,11 +181,8 @@ def test_d2_reliance(model, train_list, test_l, test_h, test_b, test_p, figType,
     # plt.close()
     test_l_pred = model.predict(test_l)
     test_h_pred = model.predict(test_h)
-    test_b_pred = model.predict(test_b)
-    test_p_pred = model.predict(test_p)
 
-
-    return test_l_pred, test_h_pred, history.pred_l, history.pred_h, test_b_pred, test_p_pred, history.pred_b, history.pred_p,
+    return test_l_pred, test_h_pred, history.pred_l, history.pred_h
 
 
 def mean_confidence_interval(data, confidence=0.95):
