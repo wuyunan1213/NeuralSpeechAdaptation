@@ -41,7 +41,9 @@ data_fig_dir = config.data_fig_dir
 PRETRAIN_BATCH_SIZE = 10
 PRETRAIN_EPOCHs = 10
 EXPOSURE_BATCH_SIZE = 10
-EXPOSURE_EPOCHS = 10
+EXPOSURE_EPOCHS = 5
+
+penalty = 0.0006
 
 ### Load all Data
 # Labels are 1 = "b" and 0 = "p"
@@ -61,9 +63,6 @@ p_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[2])
 
 ### In this version, I changed the activation to linear units, which is set as default in my implementation
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
-lr_slow = 1
-lr_fast = 50
-penalty = 0.01
 
 slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = 1, penalty = penalty)
 
@@ -111,6 +110,9 @@ plt.close()
 # outputFAST = fs.get_layer('output').get_weights()[0][60:70]
 # SLOW = fs.get_layer('slow').get_weights()[0][0,30:35]
 # FAST = fs.get_layer('fast').get_weights()[0][0,30:35]
+lr_slow = 1
+lr_fast = 100
+j = 3
 
 n_exp = 1
 for i in range(n_exp):
@@ -138,13 +140,13 @@ for i in range(n_exp):
     t2 = rev_l1 + rev_h1
     t3 = rev_l2 + rev_h2
     
-    pkl.dump(t1, open('can_test.pkl', "ab"))
-    pkl.dump(t2, open('rev_test1.pkl', "ab"))
-    pkl.dump(t3, open('rev_test2.pkl', "ab"))
+    pkl.dump(t1, open('%scan_test.pkl'%(j), "ab"))
+    pkl.dump(t2, open('%srev_test1.pkl'%(j), "ab"))
+    pkl.dump(t3, open('%srev_test2.pkl'%(j), "ab"))
 
 
 
-file_list = ['rev_test1', 'can_test', 'rev_test2']
+file_list = ['%srev_test1'%(j), '%scan_test'%(j), '%srev_test2'%(j)]
 for file in file_list:
     train_one.plot_exp_results(file, lrr = lr_fast)
 
