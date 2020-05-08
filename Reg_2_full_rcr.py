@@ -43,7 +43,7 @@ PRETRAIN_EPOCHs = 10
 EXPOSURE_BATCH_SIZE = 10
 EXPOSURE_EPOCHS = 5
 
-penalty = 0.0006
+penalty = 0.0009
 
 ### Load all Data
 # Labels are 1 = "b" and 0 = "p"
@@ -112,7 +112,7 @@ plt.close()
 # FAST = fs.get_layer('fast').get_weights()[0][0,30:35]
 lr_slow = 1
 lr_fast = 100
-j = 3
+j = 9
 
 n_exp = 1
 for i in range(n_exp):
