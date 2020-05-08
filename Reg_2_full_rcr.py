@@ -111,10 +111,10 @@ plt.close()
 # SLOW = fs.get_layer('slow').get_weights()[0][0,30:35]
 # FAST = fs.get_layer('fast').get_weights()[0][0,30:35]
 lr_slow = 1
-lr_fast = 100
-j = 9
+lr_fast = 90
+j = lr_fast
 
-n_exp = 1
+n_exp = 25
 for i in range(n_exp):
     # ### Exposure phase training with canonical and reverse data
     fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
