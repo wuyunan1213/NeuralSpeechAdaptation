@@ -25,7 +25,7 @@ from keras.callbacks import LambdaCallback, ModelCheckpoint
 ###import config and helper functions
 import config
 import generate
-import train_2_full_rcr as train_one
+import Reg_train_2_full_rcr as train_one
 
 
 ###suppresses the runtime error. Not sure what happened but this works
@@ -62,9 +62,10 @@ p_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[2])
 ### In this version, I changed the activation to linear units, which is set as default in my implementation
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
 lr_slow = 1
-lr_fast = 12
+lr_fast = 50
+penalty = 0.01
 
-slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = 1)
+slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = 1, penalty = penalty)
 
 history = train_one.Test_NBatchLogger(test_l = low_d2_test, test_h = high_d2_test)
 slow_hist = slow_model.fit(
@@ -114,18 +115,18 @@ plt.close()
 n_exp = 1
 for i in range(n_exp):
     # ### Exposure phase training with canonical and reverse data
-    fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, train_slow = True)
+    fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
     r_l1, r_h1, rev_l1, rev_h1  = train_one.test_d2_reliance(fs, rev, low_d2_test, high_d2_test, 'REVERSE1', 
                                     lr_s = lr_slow, lr_f = lr_fast, 
                                     batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('REVERSE1 = ', r_l1, r_h1)
     
-    new = train_one.set_fs_weights_one(fs, lr_s = lr_slow, lr_f = lr_fast, train_slow = True)
+    new = train_one.set_fs_weights_one(fs, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
     c_l, c_h, can_l, can_h = train_one.test_d2_reliance(new, canonical, low_d2_test, high_d2_test, 'CANONICAL1', 
     									lr_s = lr_slow, lr_f = lr_fast, 
     									batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('CANONICAL = ', c_l, c_h)
-    new2 = train_one.set_fs_weights_one(new, lr_s = lr_slow, lr_f = lr_fast, train_slow = True)
+    new2 = train_one.set_fs_weights_one(new, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
     r_l2, r_h2, rev_l2, rev_h2  = train_one.test_d2_reliance(new2, rev, low_d2_test, high_d2_test, 'REVERSE2', 
                                 lr_s = lr_slow, lr_f = lr_fast, 
                                 batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
