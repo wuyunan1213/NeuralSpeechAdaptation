@@ -33,8 +33,8 @@ def get_NN(batch_size = 1, n_input = 30, n_slow = 30, n_fast = 30, n_output = 1)
     layers[2]['Snum'] = n_slow
 	layers[2]['Fnum'] = n_fast
 
-	layers[3]['type'] = 'LOSS'
-	layers[3]['num'] = n_output
+	layers[3]['type'] = 'output'
+	layers[3]['num'] = 1
 
 	return layers
 
