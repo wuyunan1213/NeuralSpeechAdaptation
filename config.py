@@ -24,7 +24,7 @@ data_fig_dir = root_dir + 'Figure_data/'
 n_sub = 15 ### number of inputs units in each bank of input
 n_samples = 10000 ### number of samples sampled from each distribution for pretraining
 #n_acc_samples = 250 ###
-n_exposure = 200
+n_exposure = 50
 
 ###Pre-training and canonical
 mu_b = np.array([0.2, 0.2])

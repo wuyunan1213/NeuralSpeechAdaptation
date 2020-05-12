@@ -1,7 +1,9 @@
-######################################################################################
-###    This model only has one slow/fast layer. Also, the pretrained model is exactly the same
-###### as the model used in the exposure training for canonical/reverse
-######################################################################################
+""" This experiment compares the self-superved model and the supervised model: after pre-training (the model
+is trained as usual with explicit labels during pre-training), the exposure data are either trained
+using self-generated labels (using model.predict) or given labels (defined in the simulated data)
+Note that the training procedure was made identical for both models except for the output label. Thus there were some 
+changes for the supervised model that were not in previous versions.
+"""
 
 import pickle as pkl
 import datetime as dt
@@ -15,17 +17,13 @@ from keras_lr_multiplier import LRMultiplier
 from keras.callbacks import Callback
 import os
 import random
-# import tensorflow as tf
-# from tensorflow.keras.models import Sequential, Model
-# from tensorflow.keras.layers import Input, Dense, Dropout, LSTM, BatchNormalization
-# from tensorflow.keras.callbacks import Callback
 
 from keras.callbacks import LambdaCallback, ModelCheckpoint
 
 ###import config and helper functions
 import config
 import generate
-import Reg_train_2_full_rcr as train_one
+import compare_train as train_one
 
 
 ###suppresses the runtime error. Not sure what happened but this works
@@ -41,13 +39,12 @@ data_fig_dir = config.data_fig_dir
 PRETRAIN_BATCH_SIZE = 10
 PRETRAIN_EPOCHs = 10
 EXPOSURE_BATCH_SIZE = 10
-EXPOSURE_EPOCHS = 5
+EXPOSURE_EPOCHS = 20
 
 penalty = 0.0009
+lr_slow = 1
+lr_fast = 91
 
-### Load all Data
-# Labels are 1 = "b" and 0 = "p"
-#print(data_dir)
 pretrain_data = train_one.loadOfInt('pretrain.pkl', data_dir)
 
 canonical = train_one.loadOfInt('canonical.pkl', data_dir)
@@ -64,7 +61,7 @@ p_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[2])
 ### In this version, I changed the activation to linear units, which is set as default in my implementation
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
 
-slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = 1, penalty = penalty)
+slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = lr_fast, penalty = penalty)
 
 history = train_one.Test_NBatchLogger(test_l = low_d2_test, test_h = high_d2_test)
 slow_hist = slow_model.fit(
@@ -98,38 +95,36 @@ figname = train_fig_dir + 'Training_Accuracy_2_layer.png'
 plt.savefig(figname)
 plt.close()
 
-# fs_r2 = set_fs_weights(slow_model)
-# fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, train_slow = True)
-# train_one.compare_weights_2(fs, rev, 1, 1, low_d2_test, high_d2_test, "Reverse","before expose","after expose")
-
-# new = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, train_slow = True)
-# train_one.compare_weights_2(new, canonical, 1, 1, low_d2_test, high_d2_test, "Canonical","before expose","after expose")
-# right now it seems like the slow weights are very stable, but in the canonical block, the fast weights are very unstable, 
-# possibly leading to the unstableness in the canonical block.
 # outputSLOW = fs.get_layer('output').get_weights()[0][10:20]
 # outputFAST = fs.get_layer('output').get_weights()[0][60:70]
 # SLOW = fs.get_layer('slow').get_weights()[0][0,30:35]
 # FAST = fs.get_layer('fast').get_weights()[0][0,30:35]
-lr_slow = 1
-lr_fast = 90
-j = lr_fast
+n_exp = 1
+'''
 
-n_exp = 25
+SUPERVISED MODEL
+
+'''
+j = 9
+
+
+
+
 for i in range(n_exp):
     # ### Exposure phase training with canonical and reverse data
     fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    r_l1, r_h1, rev_l1, rev_h1  = train_one.test_d2_reliance(fs, rev, low_d2_test, high_d2_test, 'REVERSE1', 
+    r_l1, r_h1, rev_l1, rev_h1  = train_one.test_d2_reliance(fs, rev, low_d2_test, high_d2_test, 'Supervised_REVERSE1', 
                                     lr_s = lr_slow, lr_f = lr_fast, 
                                     batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('REVERSE1 = ', r_l1, r_h1)
     
     new = train_one.set_fs_weights_one(fs, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    c_l, c_h, can_l, can_h = train_one.test_d2_reliance(new, canonical, low_d2_test, high_d2_test, 'CANONICAL1', 
+    c_l, c_h, can_l, can_h = train_one.test_d2_reliance(new, canonical, low_d2_test, high_d2_test, 'Supervised_CANONICAL1', 
     									lr_s = lr_slow, lr_f = lr_fast, 
     									batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('CANONICAL = ', c_l, c_h)
     new2 = train_one.set_fs_weights_one(new, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    r_l2, r_h2, rev_l2, rev_h2  = train_one.test_d2_reliance(new2, rev, low_d2_test, high_d2_test, 'REVERSE2', 
+    r_l2, r_h2, rev_l2, rev_h2  = train_one.test_d2_reliance(new2, rev, low_d2_test, high_d2_test, 'Supervised_REVERSE2', 
                                 lr_s = lr_slow, lr_f = lr_fast, 
                                 batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('REVERSE2 = ', r_l2, r_h2)
@@ -140,13 +135,54 @@ for i in range(n_exp):
     t2 = rev_l1 + rev_h1
     t3 = rev_l2 + rev_h2
     
-    pkl.dump(t1, open('%scan_test.pkl'%(j), "ab"))
-    pkl.dump(t2, open('%srev_test1.pkl'%(j), "ab"))
-    pkl.dump(t3, open('%srev_test2.pkl'%(j), "ab"))
+    pkl.dump(t1, open('%scan_test_%s.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t2, open('%srev_test1_%s.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t3, open('%srev_test2_%s.pkl'%(j, lr_fast), "ab"))
 
 
 
-file_list = ['%srev_test1'%(j), '%scan_test'%(j), '%srev_test2'%(j)]
+file_list = ['%srev_test1_%s'%(j, lr_fast), '%scan_test_%s'%(j, lr_fast), '%srev_test2_%s'%(j, lr_fast)]
+for file in file_list:
+    train_one.plot_exp_results(file, lrr = lr_fast)
+
+
+'''
+
+SELF-SUPERVISED MODEL
+
+'''
+
+for i in range(n_exp):
+    # ### Exposure phase training with canonical and reverse data
+    self_fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
+    r_l1, r_h1, rev_l1, rev_h1  = train_one.self_d2_test(self_fs, rev, low_d2_test, high_d2_test, 'Self_REVERSE1', 
+                                    lr_s = lr_slow, lr_f = lr_fast, 
+                                    batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
+    print('REVERSE1 = ', r_l1, r_h1)
+    
+    self_new = train_one.set_fs_weights_one(self_fs, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
+    c_l, c_h, can_l, can_h = train_one.self_d2_test(self_new, canonical, low_d2_test, high_d2_test, 'Self_CANONICAL1', 
+                                        lr_s = lr_slow, lr_f = lr_fast, 
+                                        batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
+    print('CANONICAL = ', c_l, c_h)
+    self_new2 = train_one.set_fs_weights_one(self_new, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
+    r_l2, r_h2, rev_l2, rev_h2  = train_one.self_d2_test(self_new2, rev, low_d2_test, high_d2_test, 'Self_REVERSE2', 
+                                lr_s = lr_slow, lr_f = lr_fast, 
+                                batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
+    print('REVERSE2 = ', r_l2, r_h2)
+
+
+    t1 = can_l + can_h
+    t2 = rev_l1 + rev_h1
+    t3 = rev_l2 + rev_h2
+    
+    pkl.dump(t1, open('%scan_test_self_%s.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t2, open('%srev_test1_self_%s.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t3, open('%srev_test2_self_%s.pkl'%(j, lr_fast), "ab"))
+
+
+
+file_list = ['%srev_test1_self_%s'%(j, lr_fast), '%scan_test_self_%s'%(j, lr_fast), '%srev_test2_self_%s'%(j, lr_fast)]
 for file in file_list:
     train_one.plot_exp_results(file, lrr = lr_fast)
 

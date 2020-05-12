@@ -5,6 +5,7 @@
 ######################################################################################
 import os
 import random
+from random import shuffle
 import keras
 # import tensorflow as tf
 import numpy as np
@@ -19,7 +20,6 @@ from keras import regularizers
 
 
 import datetime
-import random
 from math import ceil
 # from tensorflow.keras.models import Sequential, Model
 # from tensorflow.keras.layers import Input, Dense, Dropout, LSTM, BatchNormalization
@@ -148,47 +148,68 @@ def set_fs_weights_one(slow_model, lr_s = 1, lr_f = 10, penalty = 0.001, activat
     # sm_weights = [6,] with (30,30)(30,0) (slow weights, bias), (30,30)(30,0)(fast weights, bias), (30,1)(1,)
     return fs_model
 
-def test_d2_reliance(model, train_list, test_l, test_h, figType, lr_s = 1, lr_f = 10, batch_size = 40, epoch = 1):
-    # model = clone_model(old_model)
-    # ### SAVE WEIGHTS
-    # model.compile(optimizer = LRMultiplier('adam', {'slow':lr_s, 'fast':lr_f}),
-    #               #SGD(lr=0.1,),
-    #               loss='binary_crossentropy',
-    #               metrics=['accuracy'])
+def paired_shuffle_split(x, y, split_size):
+    ## assuming the lenght of x and y are the same, that is, the number of data points
+    ## n is the same for x and y even though they might have different dimensions
+    shuffle_x = []
+    shuffle_y = []
+    idx = list(range(0, np.shape(x)[0]))
+    shuffle(idx)
+    for id in idx:
+        shuffle_x.append(x[id])
+        shuffle_y.append(y[id])
+    ss_x = np.array_split(shuffle_x, split_size)
+    ss_y = np.array_split(shuffle_y, split_size)
+    return ss_x, ss_y
+        
+    
+    
+def test_d2_reliance(model, train, test_l, test_h, figType, lr_s = 1, lr_f = 10, batch_size = 40, epoch = 1):
+    if (np.shape(train[0])[0]) % batch_size == 0:
+        split_size = ceil((np.shape(train[0])[0])/batch_size)
+        if split_size == 1: # batch size smaller than row
+            raise "In this experiment, batch size shouldn't equal trainin sample size"
+        else:
+            pred_l = []
+            pred_h = []
+            for e in range(epoch):
+                train_input, train_labels = paired_shuffle_split(train[0], train[1], split_size)
+                batch_list = list(range(0, split_size))
+                np.random.shuffle(batch_list)
+                for row in batch_list:
+                    model.fit(train_input[row], train_labels[row])
+                    pred_l.append(model.predict(test_l)[0][0])
+                    pred_h.append(model.predict(test_h)[0][0])
+    else:
+        raise "Batch size not divisible by sample size"
 
-    history = Test_NBatchLogger(test_l = test_l, test_h = test_h)
-    fs_hist = model.fit(
-        train_list[0], train_list[1],
-        batch_size = batch_size,
-        epochs = epoch,
-        validation_data=(train_list[2], train_list[3]),
-        callbacks = [history]
-    )
-    # fig, (ax1, ax2) = plt.subplots(2)
-    # ax1.plot(history.acc)
-    # ax1.plot(history.losses)
+    return pred_l[-1], pred_h[-1], pred_l, pred_h
 
-    # ax2.plot(history.pred_l)
-    # ax2.plot(history.pred_h)
+### everything else is the same bewteen these two functions, the only difference
+### is whether the training labels are self-generated using prediction or explicitly given
 
-    # ax1.set_title('%s_Training_accuracy'%(figType))
-    # ax1.set(xlabel = 'Batch', ylabel = 'Accuracy')
-    # ax1.legend(['Accuracy', 'Loss'], loc = 'lower left')
+def self_d2_test(model, train, test_l, test_h, figType, lr_s = 1, lr_f = 10, batch_size = 40, epoch = 1):
+    if (np.shape(train[0])[0]) % batch_size == 0:
+        split_size = ceil((np.shape(train[0])[0])/batch_size)
+        if split_size == 1: # batch size smaller than row
+            raise "In this experiment, batch size shouldn't equal trainin sample size"
+        else:
+            pred_l = []
+            pred_h = []
+            for e in range(epoch):
+                np.random.shuffle(train[0])
+                train_input = np.array_split(train[0], split_size) 
+                batch_list = list(range(0, split_size))
+                np.random.shuffle(batch_list)
+                for row in batch_list:
+                    pred_label = np.around(model.predict(train_input[row]), 0).astype(int)
+                    model.fit(train_input[row], pred_label)
+                    pred_l.append(model.predict(test_l)[0][0])
+                    pred_h.append(model.predict(test_h)[0][0])
+    else:
+        raise "Batch size not divisible by sample size"
 
-    # ax2.set_title('%s_Test_Probability'%(figType))
-    # ax2.set(xlabel = 'Batch', ylabel = 'Probability')
-    # ax2.set_ylim((0, 1))
-    # ax2.legend(['Low_F0', 'High_F0'], loc = 'lower left')
-
-    # plt.tight_layout()
-
-    # figname = train_fig_dir + '%s.png'%(figType)
-    # plt.savefig(figname)
-    # plt.close()
-    test_l_pred = model.predict(test_l)
-    test_h_pred = model.predict(test_h)
-
-    return test_l_pred, test_h_pred, history.pred_l, history.pred_h
+    return pred_l[-1], pred_h[-1], pred_l, pred_h
 
 
 def mean_confidence_interval(data, confidence=0.95):
