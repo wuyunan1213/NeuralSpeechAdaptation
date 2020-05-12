@@ -41,7 +41,7 @@ PRETRAIN_EPOCHs = 10
 EXPOSURE_BATCH_SIZE = 10
 EXPOSURE_EPOCHS = 20
 
-penalty = 0.0009
+penalty = 0.0005
 lr_slow = 1
 lr_fast = 91
 
@@ -105,7 +105,7 @@ n_exp = 1
 SUPERVISED MODEL
 
 '''
-j = 9
+j = 5
 
 
 
