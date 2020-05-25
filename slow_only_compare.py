@@ -37,9 +37,9 @@ data_fig_dir = config.data_fig_dir
 
 ###Training parameters
 PRETRAIN_BATCH_SIZE = 10
-PRETRAIN_EPOCHs = 10
+PRETRAIN_EPOCHs = 7
 EXPOSURE_BATCH_SIZE = 10
-EXPOSURE_EPOCHS = 20
+EXPOSURE_EPOCHS = 70
 
 pretrain_data = train_one.loadOfInt('pretrain.pkl', data_dir)
 
@@ -96,13 +96,13 @@ slow_hist = slow_model.fit(
 # SLOW = fs.get_layer('slow').get_weights()[0][0,30:35]
 # FAST = fs.get_layer('fast').get_weights()[0][0,30:35]
 lr_slow = 1
-n_exp = 10
+n_exp = 1
 '''
 
 SUPERVISED MODEL
 
 '''
-j = 9
+j = 1
 lr_fast = 0
 
 

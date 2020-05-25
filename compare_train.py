@@ -77,9 +77,30 @@ class Test_NBatchLogger(Callback):
 
     def on_batch_end(self, batch, logs={}):
         self.losses.append(logs.get('loss'))
-        self.acc.append(logs.get('acc'))
+        self.acc.append(logs.get('accuracy'))
         self.pred_l.extend(self.model.predict(self.test_l)[0])
         self.pred_h.extend(self.model.predict(self.test_h)[0])
+        
+class EpochLogger(Callback):
+    """
+    A Logger that log  performance per batch.
+    """
+    def __init__(self, test_l, test_h):
+        self.test_l = test_l
+        self.test_h = test_h
+        
+    def on_train_begin(self, logs = {}):
+        self.losses = []
+        self.acc = []
+        self.pred_l = []
+        self.pred_h = []
+
+    def on_epoch_end(self, epoch, logs={}):
+        self.losses.append(logs.get('loss'))
+        self.acc.append(logs.get('accuracy'))
+        self.pred_l.extend(self.model.predict(self.test_l)[0])
+        self.pred_h.extend(self.model.predict(self.test_h)[0])
+
 
 def ff_nn_one(n_slow=40, n_fast = 40, n_inp = 30, lr_s = 1, lr_f = 10, penalty = 0.001, activation = 'linear'):
     model = Sequential()
