@@ -150,6 +150,28 @@ def grid(sigma_sub, n_sub, step):
     plt.ylim(ylimits)
     return data
 
+def simExposureData(c1, c2, sigma_sub, n_sub, step, color1, color2, filename):
+    ###for canonical data
+    l = np.asarray(list(itertools.product(c1,c1)))
+    l2 = np.asarray(list(itertools.product(c2,c2)))
+    d = np.concatenate((l, l2))
+    grid = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), d)
+    can = unpack_sample(grid)
+    
+    ###for reverse data
+    r = np.asarray(list(itertools.product(c1,c2)))
+    r2 = np.asarray(list(itertools.product(c2,c1)))
+    d2 = np.concatenate((r, r2))
+    grid2 = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), d2)
+    rev = unpack_sample(grid2)
+    
+    plt.scatter(d[:, 0], d[:, 1], color = color1) 
+    plt.scatter(d2[:, 0], d2[:, 1], color = color2) 
+    figname = data_fig_dir + filename + '.png'
+    plt.savefig(figname)
+    plt.close()
+    return can, rev
+    
 
 
 ######################################################################################

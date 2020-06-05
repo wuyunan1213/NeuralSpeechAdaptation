@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ###import config and helper functions for data generation
-import config
+import config1 as config
 import generate
 
 ###import paths and parameters
@@ -54,30 +54,18 @@ pkl.dump(pr_data, open(pre_file, "wb"))
 #canonical
 # np.random.seed(500)
 # can_data = generate.simData(n_sub, n_exposure, mu_b, mu_p, sigma_b_exposure, sigma_p_exposure, sigma_sub, file = can_file)
-import itertools
-import generate
-step = 9
-d1 = np.linspace(0.1, 0.3, step)
-d2 = np.linspace(0.1, 0.3, step)
-d3 = np.linspace(0.7, 0.9, step)
-d4 = np.linspace(0.7, 0.9, step)
-l = np.asarray(list(itertools.product(d1,d2)))
-l2 = np.asarray(list(itertools.product(d3,d4)))
-
-grid_samples = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), l)
-grid_samples2 = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), l2)
-can = np.concatenate((grid_samples, grid_samples2))
-can_data = generate.unpack_sample(can)
-pkl.dump(can_data, open(can_file, "wb"))
-
 #reverse
 # np.random.seed(30000000)
 # r_data = generate.simData(n_sub, n_exposure, mu_rev_b, mu_rev_p, sigma_b_exposure, sigma_p_exposure, sigma_sub, file = rev_file)
-l = np.asarray(list(itertools.product(d1,d3)))
-l2 = np.asarray(list(itertools.product(d2,d4)))
 
-grid_samples = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), l)
-r_data = generate.unpack_sample(grid_samples)
+
+step = 9
+c1 = np.linspace(0.1, 0.3, step)
+c2 = np.linspace(0.7, 0.9, step)
+
+can_data, r_data = generate.simExposureData(c1, c2, sigma_sub, n_sub, step, 'green', 'red', 'ExposureData')
+
+pkl.dump(can_data, open(can_file, "wb"))
 pkl.dump(r_data, open(rev_file, "wb"))
 
 #test
