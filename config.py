@@ -7,10 +7,11 @@ root_dir = '/Users/charleswu/Google Drive/HoltLab/CueWeighting/Modeling/Network/
 data_dir = root_dir + 'Data/'
 
 pre_file = data_dir + 'pretrain.pkl'
-can_file = data_dir + 'canonical.pkl'
+can_file = data_dir + 'canonical1.pkl'
 rev_file = data_dir + 'rev.pkl'
-test_file = data_dir + 'test.pkl'
+test_file = data_dir + 'test5.pkl'
 test_file_hor = data_dir + 'test_hor.pkl'
+grid_file = data_dir + 'grid.pkl'
 
 train_fig_dir = root_dir + 'Figure_training/'
 data_fig_dir = root_dir + 'Figure_data/'
@@ -32,6 +33,11 @@ mu_p = np.array([0.8, 0.8])
 
 # sigma_b = np.array([[0.006, 0], [0, 0.016]])
 # sigma_p = np.array([[0.006, 0], [0, 0.016]])
+# sigma_b = np.array([[0.02, 0], [0, 0.08]])
+# sigma_p = np.array([[0.02, 0], [0, 0.08]])
+
+# sigma_b = np.array([[0.05, 0], [0, 0.05]])
+# sigma_p = np.array([[0.05, 0], [0, 0.05]])
 
 sigma_b = np.array([[0.02, 0], [0, 0.08]])
 sigma_p = np.array([[0.02, 0], [0, 0.08]])

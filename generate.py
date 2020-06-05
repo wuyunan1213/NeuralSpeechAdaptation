@@ -1,11 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import config
+import itertools
 data_fig_dir = config.data_fig_dir
 
 ######################################################################################
 ##################################### Data_generation ################################
 ######################################################################################
+xlimits = (-1,2)
+ylimits = (-1,2)
+
 def shuffle(X, y):
     y = np.array(y)
     idx = np.random.permutation(y.shape[0])
@@ -59,8 +63,8 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
     # plt.scatter(p_data[:, 0:15], p_data[:, 15:30])
     plt.scatter(b_centers[:, 0], b_centers[:, 1])
     plt.scatter(p_centers[:, 0], p_centers[:, 1])
-    plt.xlim((-1,2))
-    plt.ylim((-1,2))
+    plt.xlim(xlimits)
+    plt.ylim(ylimits)
     #plt.title()
     if type(file) == str:
         splfile = file.split('/')[-1]
@@ -76,8 +80,8 @@ def simData(n_sub, n_samples, mu_b, mu_p, sigma_b, sigma_p, sigma_sub, train_rat
     return X_tr, y_tr, X_te,y_te
 
 def simTestData(n_sub, sigma_sub, file = None):
-    b = np.array([0.5, 0.2])
-    p = np.array([0.5, 0.8])
+    b = np.array([0.49, 0.2])
+    p = np.array([0.49, 0.6])
 
     b_samples = np.random.multivariate_normal(b, sigma_sub, size=[n_sub, ])
     p_samples = np.random.multivariate_normal(p, sigma_sub, size=[n_sub, ])
@@ -88,8 +92,8 @@ def simTestData(n_sub, sigma_sub, file = None):
 
     plt.scatter(b_data[0:15], b_data[15:30])
     plt.scatter(p_data[0:15], p_data[15:30])
-    plt.xlim((-1,2))
-    plt.ylim((-1,2))
+    plt.xlim(xlimits)
+    plt.ylim(ylimits)
     #plt.title()
     if type(file) == str:
         splfile = file.split('/')[-1]
@@ -105,8 +109,8 @@ def simTestData(n_sub, sigma_sub, file = None):
     return [b_data], 0, [p_data], 1
 
 def simTestData_hor(n_sub, sigma_sub, file = None):
-    b = np.array([0.2, 0.5])
-    p = np.array([0.8, 0.5])
+    b = np.array([0.2, 0.49])
+    p = np.array([0.6, 0.49])
 
     b_samples = np.random.multivariate_normal(b, sigma_sub, size=[n_sub, ])
     p_samples = np.random.multivariate_normal(p, sigma_sub, size=[n_sub, ])
@@ -117,8 +121,8 @@ def simTestData_hor(n_sub, sigma_sub, file = None):
 
     plt.scatter(b_data[0:15], b_data[15:30])
     plt.scatter(p_data[0:15], p_data[15:30])
-    plt.xlim((-1,2))
-    plt.ylim((-1,2))
+    plt.xlim(xlimits)
+    plt.ylim(ylimits)
     #plt.title()
     if type(file) == str:
         splfile = file.split('/')[-1]
@@ -132,6 +136,21 @@ def simTestData_hor(n_sub, sigma_sub, file = None):
     ### Convert Samples to Dataframes
 
     return [b_data], 0, [p_data], 1
+
+def grid(sigma_sub, n_sub, step):
+    d1 = np.linspace(-0.1, 0.80, step)
+    d2 = np.linspace(-0.1, 0.80, step)
+    l = np.asarray(list(itertools.product(d1,d2)))
+
+    grid_samples = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), l)
+    data = unpack_sample(grid_samples)
+
+    plt.scatter(l[:, 0], l[:, 1])
+    plt.xlim(xlimits)
+    plt.ylim(ylimits)
+    return data
+
+
 
 ######################################################################################
 ################################## Exposure learning #################################

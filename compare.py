@@ -43,7 +43,7 @@ data_fig_dir = config.data_fig_dir
 PRETRAIN_BATCH_SIZE = 10
 PRETRAIN_EPOCHs = 7
 EXPOSURE_BATCH_SIZE = 10
-EXPOSURE_EPOCHS = 70
+EXPOSURE_EPOCHS = 10
 
 penalty = 0.0004
 lr_slow = 1
@@ -56,11 +56,12 @@ canonical = train_one.loadOfInt('canonical.pkl', data_dir)
 rev = train_one.loadOfInt('rev.pkl', data_dir)
 
 # rev2 = train_one.loadOfInt("rev2.pkl")
-low_d2_test = np.array(train_one.loadOfInt('test.pkl', data_dir)[0])
-high_d2_test = np.array(train_one.loadOfInt('test.pkl', data_dir)[2])
+# use dimension1 = .49 instead of .5 achieves prettier results
+low_d2_test = np.array(train_one.loadOfInt('test49.pkl', data_dir)[0])
+high_d2_test = np.array(train_one.loadOfInt('test49.pkl', data_dir)[2])
 
-b_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[0])
-p_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[2])
+# b_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[0])
+# p_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[2])
 
 ### In this version, I changed the activation to linear units, which is set as default in my implementation
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
@@ -76,6 +77,8 @@ slow_hist = slow_model.fit(
     callbacks = [history]
     #callbacks=[tensorboard]
 )
+
+
 # slow_model.save('slow_model')
 
 # fig, (ax1, ax2) = plt.subplots(2)
@@ -104,72 +107,77 @@ slow_hist = slow_model.fit(
 # outputFAST = fs.get_layer('output').get_weights()[0][60:70]
 # SLOW = fs.get_layer('slow').get_weights()[0][0,30:35]
 # FAST = fs.get_layer('fast').get_weights()[0][0,30:35]
-n_exp = 1
+n_exp = 20
 '''
 
 SUPERVISED MODEL
 
 '''
-j = 4
+j = 5
 # slow_model.save_weights('sm_weights')
+
+
 # slow_model.load_weights('sm_weights')
 
 # slow_model = load_model('slow_model')
 for i in range(n_exp):
     # ### Exposure phase training with canonical and reverse data
     fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    r_l1, r_h1, rev_l1, rev_h1  = train_one.test_d2_reliance(fs, rev, low_d2_test, high_d2_test, 'Supervised_REVERSE1', 
+    r_l1, r_h1, rev_l1, rev_h1, rev1_acc, rev1_ls = train_one.test_d2_reliance(fs, rev, low_d2_test, high_d2_test,
+                                   'Supervised_REVERSE1', 
                                     lr_s = lr_slow, lr_f = lr_fast, 
                                     batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('REVERSE1 = ', r_l1, r_h1)
     
     new = train_one.set_fs_weights_one(fs, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    c_l, c_h, can_l, can_h = train_one.test_d2_reliance(new, canonical, low_d2_test, high_d2_test, 'Supervised_CANONICAL1', 
+    c_l, c_h, can_l, can_h, can_acc, can_ls = train_one.test_d2_reliance(new, canonical, low_d2_test, high_d2_test,
+                                    'Supervised_CANONICAL1', 
     									lr_s = lr_slow, lr_f = lr_fast, 
     									batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('CANONICAL = ', c_l, c_h)
     new2 = train_one.set_fs_weights_one(new, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    r_l2, r_h2, rev_l2, rev_h2  = train_one.test_d2_reliance(new2, rev, low_d2_test, high_d2_test, 'Supervised_REVERSE2', 
+    r_l2, r_h2, rev_l2, rev_h2, rev2_acc, rev2_ls  = train_one.test_d2_reliance(new2, rev, low_d2_test, high_d2_test,
+                                    'Supervised_REVERSE2', 
                                 lr_s = lr_slow, lr_f = lr_fast, 
                                 batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('REVERSE2 = ', r_l2, r_h2)
 
 
     
-    t1 = can_l + can_h
-    t2 = rev_l1 + rev_h1
-    t3 = rev_l2 + rev_h2
+    t1 = can_l + can_h + can_ls
+    t2 = rev_l1 + rev_h1 + rev1_ls
+    t3 = rev_l2 + rev_h2 + rev2_ls
     
-    pkl.dump(t1, open('%scan_test_%s.pkl'%(j, lr_fast), "ab"))
-    pkl.dump(t2, open('%srev_test1_%s.pkl'%(j, lr_fast), "ab"))
-    pkl.dump(t3, open('%srev_test2_%s.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t1, open('%scan_test_%s_real.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t2, open('%srev_test1_%s_real.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t3, open('%srev_test2_%s_real.pkl'%(j, lr_fast), "ab"))
 
 
+file_list = ['%srev_test1_%s_real'%(j, lr_fast), '%scan_test_%s_real'%(j, lr_fast), '%srev_test2_%s_real'%(j, lr_fast)]
 
-file_list = ['%srev_test1_%s'%(j, lr_fast), '%scan_test_%s'%(j, lr_fast), '%srev_test2_%s'%(j, lr_fast)]
 for file in file_list:
     train_one.plot_exp_results(file, lrr = lr_fast)
 
-plt.plot(rev_l1)
-plt.plot(rev_h1)
-plt.ylim(((0,1)))
-figname = train_fig_dir + 'sf_rev.png'
-plt.savefig(figname)
+# plt.plot(rev_l1)
+# plt.plot(rev_h1)
+# plt.ylim(((0,1)))
+# figname = train_fig_dir + 'sf_rev_real.png'
+# plt.savefig(figname)
 
-# l = [r_l1, c_l, r_l2]
-# h = [r_h1, c_h, r_h2]
-# fig, ax1 = plt.subplots()
+l = [r_l1, c_l, r_l2]
+h = [r_h1, c_h, r_h2]
+fig, ax1 = plt.subplots()
 
-# ax1.plot(l)
-# ax1.plot(h)
-# ax1.set_title('Supervised model')
-# ax1.set_ylim((0,1))
-# ax1.set_xticks([0,1,2])
-# ax1.set_xticklabels(['Reverse1', 'Canonical', 'Reverse2'])
-# ax1.set(xlabel = 'Block', ylabel = 'Probability')
-# ax1.legend(['LowF0', 'HighF0'], loc = 'lower left')
-# figname = train_fig_dir + 'sf_test_dw.png'
-# fig.savefig(figname)
+ax1.plot(l)
+ax1.plot(h)
+ax1.set_title('Supervised model')
+ax1.set_ylim((0,1))
+ax1.set_xticks([0,1,2])
+ax1.set_xticklabels(['Reverse1', 'Canonical', 'Reverse2'])
+ax1.set(xlabel = 'Block', ylabel = 'Probability')
+ax1.legend(['LowF0', 'HighF0'], loc = 'lower left')
+figname = train_fig_dir + 'sf_test_dw_1.png'
+fig.savefig(figname)
 
 '''
 
@@ -180,34 +188,34 @@ SELF-SUPERVISED MODEL
 for i in range(n_exp):
     # ### Exposure phase training with canonical and reverse data
     self_fs = train_one.set_fs_weights_one(slow_model, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    r_l1, r_h1, rev_l1, rev_h1  = train_one.self_d2_test(self_fs, rev, low_d2_test, high_d2_test, 'Self_REVERSE1', 
+    r_l1, r_h1, rev_l1, rev_h1, rev1_acc, rev1_ls  = train_one.self_d2_test(self_fs, rev, low_d2_test, high_d2_test, 'Self_REVERSE1', 
                                     lr_s = lr_slow, lr_f = lr_fast, 
                                     batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('REVERSE1 = ', r_l1, r_h1)
     
     self_new = train_one.set_fs_weights_one(self_fs, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    c_l, c_h, can_l, can_h = train_one.self_d2_test(self_new, canonical, low_d2_test, high_d2_test, 'Self_CANONICAL1', 
+    c_l, c_h, can_l, can_h, can_acc, can_ls = train_one.self_d2_test(self_new, canonical, low_d2_test, high_d2_test, 'Self_CANONICAL1', 
                                         lr_s = lr_slow, lr_f = lr_fast, 
                                         batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('CANONICAL = ', c_l, c_h)
     self_new2 = train_one.set_fs_weights_one(self_new, lr_s = lr_slow, lr_f = lr_fast, penalty = penalty, train_slow = True)
-    r_l2, r_h2, rev_l2, rev_h2  = train_one.self_d2_test(self_new2, rev, low_d2_test, high_d2_test, 'Self_REVERSE2', 
+    r_l2, r_h2, rev_l2, rev_h2, rev2_acc, rev2_ls  = train_one.self_d2_test(self_new2, rev, low_d2_test, high_d2_test, 'Self_REVERSE2', 
                                 lr_s = lr_slow, lr_f = lr_fast, 
                                 batch_size = EXPOSURE_BATCH_SIZE, epoch= EXPOSURE_EPOCHS)
     print('REVERSE2 = ', r_l2, r_h2)
 
 
-    t1 = can_l + can_h
-    t2 = rev_l1 + rev_h1
-    t3 = rev_l2 + rev_h2
+    t1 = can_l + can_h + can_ls
+    t2 = rev_l1 + rev_h1 + rev1_ls
+    t3 = rev_l2 + rev_h2 + rev2_ls
     
-    pkl.dump(t1, open('%scan_test_self_%s.pkl'%(j, lr_fast), "ab"))
-    pkl.dump(t2, open('%srev_test1_self_%s.pkl'%(j, lr_fast), "ab"))
-    pkl.dump(t3, open('%srev_test2_self_%s.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t1, open('%scan_test_self_%s_real.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t2, open('%srev_test1_self_%s_real.pkl'%(j, lr_fast), "ab"))
+    pkl.dump(t3, open('%srev_test2_self_%s_real.pkl'%(j, lr_fast), "ab"))
 
 
 
-file_list = ['%srev_test1_self_%s'%(j, lr_fast), '%scan_test_self_%s'%(j, lr_fast), '%srev_test2_self_%s'%(j, lr_fast)]
+file_list = ['%srev_test1_self_%s_real'%(j, lr_fast), '%scan_test_self_%s_real'%(j, lr_fast), '%srev_test2_self_%s_real'%(j, lr_fast)]
 for file in file_list:
     train_one.plot_exp_results(file, lrr = lr_fast)
 
@@ -215,35 +223,35 @@ for file in file_list:
 # plt.plot(rev_h1)
 
 
-# l = [r_l1, c_l, r_l2]
-# h = [r_h1, c_h, r_h2]
-# fig, ax1 = plt.subplots()
+l = [r_l1, c_l, r_l2]
+h = [r_h1, c_h, r_h2]
+fig, ax1 = plt.subplots()
 
-# ax1.plot(l)
-# ax1.plot(h)
-# ax1.set_title('Self-Supervised model')
-# ax1.set_ylim((0,1))
-# ax1.set_xticks([0,1,2])
-# ax1.set_xticklabels(['Reverse1', 'Canonical', 'Reverse2'])
-# ax1.set(xlabel = 'Block', ylabel = 'Probability')
-# ax1.legend(['LowF0', 'HighF0'], loc = 'lower left')
-# figname = train_fig_dir + 'self_sf_test_dw.png'
-# fig.savefig(figname)
+ax1.plot(l)
+ax1.plot(h)
+ax1.set_title('Self-Supervised model')
+ax1.set_ylim((0,1))
+ax1.set_xticks([0,1,2])
+ax1.set_xticklabels(['Reverse1', 'Canonical', 'Reverse2'])
+ax1.set(xlabel = 'Block', ylabel = 'Probability')
+ax1.legend(['LowF0', 'HighF0'], loc = 'lower left')
+figname = train_fig_dir + 'self_sf_test_dw_1.png'
+fig.savefig(figname)
 
 # FAST = slow_model.get_layer('fast').get_weights()[0]
 # SLOW = slow_model.get_layer('slow').get_weights()[0]
-# f = np.absolute(FAST).flatten()
-# s = np.absolute(SLOW).flatten()
+# f = FAST.flatten()
+# s = SLOW.flatten()
 # df = pd.DataFrame(columns = ['pathway', 'weight'])
 # df['pathway'] = np.concatenate((np.repeat('fast', len(f)), np.repeat('slow', len(s))))
 # df['weight'] = np.concatenate((f,s))
 # df.to_csv(path_or_buf = root_dir + 'SLOW_FAST.csv', index = False)
 
 
-# d1_w_slow = np.absolute(SLOW[:15,:])
-# d2_w_slow = np.absolute(SLOW[15:30,:])
-# d1_w_fast = np.absolute(FAST[:15,:])
-# d2_w_fast = np.absolute(FAST[15:30,:])
+# d1_w_slow = SLOW[:15,:]
+# d2_w_slow = SLOW[15:30,:]
+# d1_w_fast = FAST[:15,:]
+# d2_w_fast = FAST[15:30,:]
 
 # df = pd.DataFrame(columns = ['pathway', 'dimension', 'weight'])
 # w1_slow = d1_w_slow.flatten()
@@ -287,6 +295,51 @@ for file in file_list:
 #                                   np.repeat('d1', len(w1_fast)), np.repeat('d2', len(w2_fast))))
 # df['weight'] = np.concatenate((sw1, sw2, selfw1, selfw2))
 # df.to_csv(path_or_buf = root_dir + 'MODEL_DIM.csv', index = False)
+
+##grid test of the pretrianed model
+
+# import itertools
+# import generate
+
+# d1 = np.linspace(0.3, 0.51, 7)
+# d1 = np.linspace(0.3, 0.51, 7)
+
+# l = np.asarray(list(itertools.product(d1,d2)))
+# sigma_sub = np.array([[0.00001, 0], [0, 0.00001]])
+# n_sub = 15
+
+# grid_samples = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), l)
+# grid = generate.unpack_sample(grid_samples)
+
+# probs = slow_model.predict(grid)
+
+# df = pd.DataFrame(columns = ['Dimension1', 'Dimension2', 'Probability'])
+# df['Dimension1'] = l[:,0]
+# df['Dimension2'] = l[:,1]
+# df['Probability'] = probs
+
+# df.to_csv(path_or_buf = root_dir + 'GRID.csv', index = False)
+
+# import generate
+
+# d1 = np.linspace(0, 0.8, 33)
+# d2 = np.repeat(0.41, 33)
+
+# l = np.vstack((d1, d2)).T
+# sigma_sub = np.array([[0.00001, 0], [0, 0.00001]])
+# n_sub = 15
+
+# grid_samples = map(lambda x: np.random.multivariate_normal(x, sigma_sub, size=[n_sub, ]), l)
+# grid = generate.unpack_sample(grid_samples)
+
+# probs = slow_model.predict(grid)
+
+# df = pd.DataFrame(columns = ['Dimension1', 'Dimension2', 'Probability'])
+# df['Dimension1'] = l[:,0]
+# df['Dimension2'] = l[:,1]
+# df['Probability'] = probs
+
+# df.to_csv(path_or_buf = root_dir + 'GRID.csv', index = False)
 
 
 

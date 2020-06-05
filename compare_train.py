@@ -193,18 +193,25 @@ def test_d2_reliance(model, train, test_l, test_h, figType, lr_s = 1, lr_f = 10,
         else:
             pred_l = []
             pred_h = []
+            acc = []
+            loss = []
+            history = EpochLogger(test_l, test_h)
             for e in range(epoch):
                 train_input, train_labels = paired_shuffle_split(train[0], train[1], split_size)
                 batch_list = list(range(0, split_size))
                 np.random.shuffle(batch_list)
                 for row in batch_list:
-                    model.fit(train_input[row], train_labels[row])
-                    pred_l.append(model.predict(test_l)[0][0])
-                    pred_h.append(model.predict(test_h)[0][0])
+                    model.fit(train_input[row], train_labels[row], callbacks = [history])
+                    acc.append(history.acc[0])
+                    loss.append(history.losses[0])
+                    pred_l.append(history.pred_l[0])
+                    pred_h.append(history.pred_h[0])
+                    # pred_l.append(model.predict(test_l)[0][0])
+                    # pred_h.append(model.predict(test_h)[0][0])
     else:
         raise "Batch size not divisible by sample size"
 
-    return pred_l[-1], pred_h[-1], pred_l, pred_h
+    return pred_l[-1], pred_h[-1], pred_l, pred_h, acc, loss
 
 ### everything else is the same bewteen these two functions, the only difference
 ### is whether the training labels are self-generated using prediction or explicitly given
@@ -217,49 +224,79 @@ def self_d2_test(model, train, test_l, test_h, figType, lr_s = 1, lr_f = 10, bat
         else:
             pred_l = []
             pred_h = []
+            acc = []
+            loss = []
+            history = EpochLogger(test_l, test_h)
             for e in range(epoch):
                 np.random.shuffle(train[0])
-                train_input = np.array_split(train[0], split_size) 
+                train_input, train_labels = paired_shuffle_split(train[0], train[1], split_size)
                 batch_list = list(range(0, split_size))
                 np.random.shuffle(batch_list)
                 for row in batch_list:
                     pred_label = np.around(model.predict(train_input[row]), 0).astype(int)
-                    model.fit(train_input[row], pred_label)
-                    pred_l.append(model.predict(test_l)[0][0])
-                    pred_h.append(model.predict(test_h)[0][0])
+                    #acc.append(np.sum(np.equal(pred_label, train_labels[row]))/len(pred_label))
+                    model.fit(train_input[row], pred_label, callbacks = [history])
+                    acc.append(history.acc[0])
+                    loss.append(history.losses[0])
+                    pred_l.append(history.pred_l[0])
+                    pred_h.append(history.pred_h[0])
+                    # pred_l.append(model.predict(test_l)[0][0])
+                    # pred_h.append(model.predict(test_h)[0][0])
     else:
         raise "Batch size not divisible by sample size"
 
-    return pred_l[-1], pred_h[-1], pred_l, pred_h
+    return pred_l[-1], pred_h[-1], pred_l, pred_h, acc, loss
 
 
 def mean_confidence_interval(data, confidence=0.95):
     ###assuming the input is an np array
     n = len(data)
     p = np.shape(data)[1]
-    idx = int(p/2)
-    low = data[:, :idx]
-    high = data[:, idx:]
+    idx = np.array_split(list(range(p)), 3)
+    low = data[:, idx[0]]
+    high = data[:, idx[1]]
+    loss = data[:, idx[2]]
+    
     m_l, se_l = np.mean(low, axis = 0), scipy.stats.sem(low)
     m_h, se_h = np.mean(high, axis = 0), scipy.stats.sem(high)
+    # m_acc, se_acc = np.mean(acc, axis = 0), scipy.stats.sem(acc)
+    m_ls, se_ls = np.mean(loss, axis = 0), scipy.stats.sem(loss)
     #h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
-    return (m_l, se_l, m_h, se_h)##change this to h if you want CIs.
+    return (m_l, se_l, m_h, se_h, m_ls, se_ls)##change this to h if you want CIs.
 
 
-def plot_mean_and_CI(mean, se, mean2 = None, se2 = None, color_shading=None, 
-                    color_shading2=None):
+def plot_mean_and_CI(mean, se, mean2 = None, se2 = None, mean3 = None, se3 = None,
+                    color_shading='orange', color_shading2='purple', color_shading3 = 'red'):
     # plot the shaded range of the confidence intervals
     x = range(mean.shape[0])
-    fig = plt.figure()
-    plt.fill_between(range(mean.shape[0]), mean-se, mean+se,
+    fig, (ax1, ax2) = plt.subplots(2)
+    
+    ax1.fill_between(range(mean.shape[0]), mean-se, mean+se,
                      color=color_shading, alpha=.5)
-    plt.fill_between(range(mean2.shape[0]), mean2-se2, mean2+se2,
+    ax1.fill_between(range(mean2.shape[0]), mean2-se2, mean2+se2,
                  color=color_shading2, alpha=.5)
-    plt.ylim((0,1))
-    plt.legend(['LowF0', 'HighF0'], loc = 'lower right') 
+    ax1.plot(x, mean, color = color_shading)
+    ax1.plot(x, mean2, color = color_shading2)
+    
+    ax1.set_ylim((0,1))
+    ax1.legend(['LowF0', 'HighF0'], loc = 'lower right') 
+    
+    ax2.fill_between(range(mean3.shape[0]), mean3-se3, mean3+se3,
+                 color=color_shading3, alpha=.5)
+    ax2.plot(x, mean3, color = color_shading3)
+    ax2.set_ylim((0,0.03))
+    ax2.legend(['Loss'], loc = 'lower right') 
+    
+    # plt.fill_between(range(mean3.shape[0]), mean3-se3, mean3+se3,
+    #                  linestyle = '--', color=color_shading3, alpha=.5)
+    
+    # plt.fill_between(range(mean4.shape[0]), mean4-se4, mean4+se4,
+    #              linestyle = '--', color=color_shading4, alpha=.5)
+    
+
     # plot the mean on top
-    plt.plot(x, mean)
-    plt.plot(x, mean2)
+    # plt.plot(x, mean3)
+    # plt.plot(x, mean4)
     
     return fig
 
@@ -279,7 +316,7 @@ def plot_mean_and_CI(mean, se, mean2 = None, se2 = None, color_shading=None,
 #     f2.savefig(f2name)
 
 
-def plot_exp_results(fname, lrr = 12, c1 = 'blue', c2 = 'orange'):
+def plot_exp_results(fname, lrr = 12, c1 = 'orange', c2 = 'purple', c3 = 'red'):
     r = []
     filename = fname + '.pkl'
     with open(filename, 'rb') as f:
@@ -289,9 +326,9 @@ def plot_exp_results(fname, lrr = 12, c1 = 'blue', c2 = 'orange'):
         except EOFError:
             pass
     r = np.array(r)
-    rev_l_m, rev_l_se, rev_h_m, rev_h_se = mean_confidence_interval(r)
-    f2 = plot_mean_and_CI(rev_l_m, rev_l_se, mean2 = rev_h_m, se2 = rev_h_se, color_shading = c1,
-                                    color_shading2=c2)
+    rev_l_m, rev_l_se, rev_h_m, rev_h_se, ls_m, ls_se = mean_confidence_interval(r)
+    f2 = plot_mean_and_CI(rev_l_m, rev_l_se, rev_h_m, rev_h_se, ls_m, ls_se,
+                          color_shading = c1, color_shading2=c2, color_shading3 = c3)
     f2name = train_fig_dir+'%s_Reg_2_f_%s_.png'%(fname, lrr)
     f2.savefig(f2name)
 
