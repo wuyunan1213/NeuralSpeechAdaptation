@@ -59,7 +59,7 @@ pkl.dump(pr_data, open(pre_file, "wb"))
 # r_data = generate.simData(n_sub, n_exposure, mu_rev_b, mu_rev_p, sigma_b_exposure, sigma_p_exposure, sigma_sub, file = rev_file)
 
 
-step = 9
+step = 6
 c1 = np.linspace(0.1, 0.3, step)
 c2 = np.linspace(0.7, 0.9, step)
 

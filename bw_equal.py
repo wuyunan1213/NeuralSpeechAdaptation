@@ -45,17 +45,17 @@ PRETRAIN_EPOCHs = 7
 EXPOSURE_BATCH_SIZE = 10
 EXPOSURE_EPOCHS = 10
 
-penalty = 0.0009
+penalty = 0.0004
 lr_slow = 1
-lr_fast = 85
+lr_fast = 91
 
 # pretrain_data = train_one.loadOfInt('pretrain.pkl', data_dir)
 # pretrain_data = train_one.loadOfInt('pretrain1.pkl', data_dir)
-pretrain_data = train_one.loadOfInt('pretrain2.pkl', data_dir)
+pretrain_data = train_one.loadOfInt('pretrain_equal.pkl', data_dir)
 
-canonical = train_one.loadOfInt('canonical.pkl', data_dir)
+canonical = train_one.loadOfInt('canonical1.pkl', data_dir)
 
-rev = train_one.loadOfInt('rev.pkl', data_dir)
+rev = train_one.loadOfInt('rev1.pkl', data_dir)
 
 # rev2 = train_one.loadOfInt("rev2.pkl")
 # use dimension1 = .49 instead of .5 achieves prettier results
@@ -69,18 +69,18 @@ p_d1_test = np.array(train_one.loadOfInt('test_hor.pkl', data_dir)[2])
 ### I also unfreeze the slow weights so that there's weight update in the slow pathway as well during exposure
 
 slow_model = train_one.ff_nn_one(lr_s = 1, lr_f = lr_fast, penalty = penalty)
-# history = train_one.Test_NBatchLogger(test_l = low_d2_test, test_h = high_d2_test)
-# slow_hist = slow_model.fit(
-#     pretrain_data[0], pretrain_data[1],
-#     batch_size = PRETRAIN_BATCH_SIZE,
-#     epochs = PRETRAIN_EPOCHs,
-#     validation_data=(pretrain_data[2], pretrain_data[3]), 
-#     callbacks = [history]
-#     #callbacks=[tensorboard]
-# )
+history = train_one.Test_NBatchLogger(test_l = low_d2_test, test_h = high_d2_test)
+slow_hist = slow_model.fit(
+    pretrain_data[0], pretrain_data[1],
+    batch_size = PRETRAIN_BATCH_SIZE,
+    epochs = PRETRAIN_EPOCHs,
+    validation_data=(pretrain_data[2], pretrain_data[3]), 
+    callbacks = [history]
+    #callbacks=[tensorboard]
+)
 
-# slow_model.save_weights('f01_weights')
-slow_model.load_weights('f01_weights')
+# slow_model.save_weights('equal_weights')
+slow_model.load_weights('equal_weights')
 
 
 
@@ -106,6 +106,12 @@ slow_model.load_weights('f01_weights')
 # plt.savefig(figname)
 # plt.close()
 n_exp = 1
+
+'''
+SUPERVISED MODEL
+'''
+j = 4
+
 '''
 SELF-SUPERVISED MODEL
 '''
@@ -133,29 +139,25 @@ l = [rev_l1[-1], can_l[-1], rev_l2[-1]]
 h = [rev_h1[-1], can_h[-1], rev_h2[-1]]
 long = [rev_long1[-1], can_long[-1], rev_long2[-1]]
 short = [rev_short1[-1], can_short[-1], rev_short2[-1]]
-
 fig, ax1 = plt.subplots()
 
-ax1.plot(long, color = 'green', linestyle = '--')
-ax1.plot(short, color = 'blue', linestyle = '--')
-
-ax1.plot(h, color = 'purple', linestyle = '-')
-ax1.plot(l, color = 'orange', linestyle = '-')
-
-
+ax1.plot(l)
+ax1.plot(h)
+ax1.plot(short)
+ax1.plot(long)
 
 ax1.set_title('Self-Supervised model')
-ax1.set_ylim((-0.2,1.2))
+ax1.set_ylim((0,1.2))
 ax1.set_xticks([0,1,2])
 ax1.set_xticklabels(['Reverse1', 'Canonical', 'Reverse2'])
 ax1.set(xlabel = 'Block', ylabel = 'Probability')
-ax1.legend(['LongVOT', 'ShortVOT', 'HighF0', 'LowF0'], loc = 'lower left')
+ax1.legend(['LowF0', 'HighF0', 'ShortVOT', 'LongVOT'], loc = 'lower left')
 
-figname = train_fig_dir + 'self_bw2.png'
+figname = train_fig_dir + 'self_bw11.png'
 fig.savefig(figname)
 
-# plt.plot(rev_long1)
-# plt.plot(rev_short1)
+plt.plot(rev_long1)
+plt.plot(rev_short1)
 
 
 

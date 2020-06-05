@@ -7,8 +7,8 @@ root_dir = '/Users/charleswu/Google Drive/HoltLab/CueWeighting/Modeling/Network/
 data_dir = root_dir + 'Data/'
 
 pre_file = data_dir + 'pretrain3.pkl'
-can_file = data_dir + 'canonical1.pkl'
-rev_file = data_dir + 'rev1.pkl'
+can_file = data_dir + 'canonical2.pkl'
+rev_file = data_dir + 'rev2.pkl'
 test_file = data_dir + 'test5.pkl'
 test_file_hor = data_dir + 'test_hor.pkl'
 grid_file = data_dir + 'grid.pkl'

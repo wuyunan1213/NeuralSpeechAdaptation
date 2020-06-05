@@ -7,8 +7,8 @@ data_fig_dir = config.data_fig_dir
 ######################################################################################
 ##################################### Data_generation ################################
 ######################################################################################
-xlimits = (-1,2)
-ylimits = (-1,2)
+xlimits = (0,1.2)
+ylimits = (0,1.2)
 
 def shuffle(X, y):
     y = np.array(y)
@@ -167,6 +167,8 @@ def simExposureData(c1, c2, sigma_sub, n_sub, step, color1, color2, filename):
     
     plt.scatter(d[:, 0], d[:, 1], color = color1) 
     plt.scatter(d2[:, 0], d2[:, 1], color = color2) 
+    plt.xlim(xlimits)
+    plt.ylim(ylimits)
     figname = data_fig_dir + filename + '.png'
     plt.savefig(figname)
     plt.close()
